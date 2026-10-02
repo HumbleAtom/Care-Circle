@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Care Circle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDEAE3;
+    --card: #FAF8F4;
+    --ink: #2B2630;
+    --ink-soft: #6B6470;
+    --line: #DCD7CC;
+    --teal: #4C7A78;
+    --teal-soft: #E4EEED;
+    --marigold: #E0973C;
+    --marigold-soft: #FBEBD6;
+    --rose: #B98F84;
+    --rose-soft: #F3E7E3;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #22201D;
+      --card: #2C2924;
+      --ink: #F1EDE6;
+      --ink-soft: #B9B2A6;
+      --line: #43403A;
+      --teal-soft: #253634;
+      --marigold-soft: #3A2E1C;
+      --rose-soft: #362823;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #22201D;
+    --card: #2C2924;
+    --ink: #F1EDE6;
+    --ink-soft: #B9B2A6;
+    --line: #43403A;
+    --teal-soft: #253634;
+    --marigold-soft: #3A2E1C;
+    --rose-soft: #362823;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 60px;
+  }
+  .app, .wizard { width: 100%; max-width: 560px; }
+
+  /* ---------- Shared bits ---------- */
+  h1, h2 { margin: 0; }
+  .fraunces { font-family: 'Fraunces', serif; }
+  input[type="text"], input[type="time"] {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 13px;
+    color: var(--ink);
+    width: 100%;
+  }
+  input::placeholder { color: var(--ink-soft); }
+  .btn {
+    border: none;
+    border-radius: 22px;
+    padding: 12px 22px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--teal); color: white; }
+  .btn.primary:hover { background: #3f6664; }
+  .btn.primary:disabled { background: var(--line); color: var(--ink-soft); cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--ink-soft); padding: 12px 8px; }
+  .btn.ghost:hover { color: var(--ink); }
+  .btn.small { padding: 8px 14px; font-size: 13px; border-radius: 18px; }
+
+  /* ---------- Wizard ---------- */
+  .wizard { display: none; }
+  .wizard.active { display: block; }
+  .dots { display: flex; gap: 7px; margin-bottom: 30px; padding-left: 2px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: background 0.3s ease, width 0.3s ease; }
+  .dot.filled { background: var(--teal); width: 18px; border-radius: 4px; }
+
+  .step-title { font-size: 27px; font-weight: 500; line-height: 1.25; margin-bottom: 8px; }
+  .step-hint { font-size: 14px; color: var(--ink-soft); margin: 0 0 26px; line-height: 1.5; max-width: 46ch; }
+
+  .field-label { font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-bottom: 7px; display: block; }
+  .field-block { margin-bottom: 22px; }
+
+  .people-list, .item-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .chip-row {
+    display: flex; align-items: center; gap: 11px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .chip-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--card); flex-shrink: 0;
+  }
+  .chip-name { flex: 1; font-size: 14.5px; font-weight: 500; }
+  .chip-remove { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 13px; padding: 4px 6px; }
+  .chip-remove:hover { color: var(--ink); }
+
+  .add-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .add-row input { flex: 1; }
+  .add-row.item-add-row input[type="time"] { flex: none; width: 118px; }
+
+  .urgency-row { margin: 4px 0 18px; }
+  .urgency-label { font-size: 12.5px; color: var(--ink); font-weight: 600; display: block; margin-bottom: 3px; }
+  .urgency-hint { font-size: 12px; color: var(--ink-soft); display: block; margin-bottom: 9px; line-height: 1.4; }
+  .urgency-options { display: flex; gap: 7px; }
+  .urgency-btn {
+    flex: 1;
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    color: var(--ink-soft);
+    border-radius: 18px;
+    padding: 8px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+  .urgency-btn.selected { border-color: var(--teal); background: var(--teal-soft); color: var(--teal); }
+  .urgency-btn:hover:not(.selected) { border-color: var(--ink-soft); }
+
+  .radio-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .radio-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+  .radio-row.selected { border-color: var(--teal); background: var(--teal-soft); }
+  .radio-dot {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line);
+    flex-shrink: 0; position: relative;
+  }
+  .radio-row.selected .radio-dot { border-color: var(--teal); }
+  .radio-row.selected .radio-dot::after {
+    content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--teal);
+  }
+  .radio-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--card); }
+  .radio-name { font-size: 14.5px; font-weight: 500; }
+
+  .wizard-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+
+  .welcome-mark { font-size: 15px; color: var(--ink-soft); margin-bottom: 6px; }
+  .empty-note { font-size: 13px; color: var(--ink-soft); padding: 4px 2px 10px; }
+
+  .done-screen { text-align: center; padding: 60px 10px 0; }
+  .done-emoji { font-size: 40px; margin-bottom: 18px; }
+  .done-title { font-size: 26px; margin-bottom: 8px; }
+  .done-sub { font-size: 14.5px; color: var(--ink-soft); margin-bottom: 30px; }
+
+  /* ---------- Dashboard (reused) ---------- */
+  .app { display: none; }
+  .app.active { display: block; }
+  .header { padding: 4px 4px 22px; }
+  .date { font-size: 13px; color: var(--ink-soft); letter-spacing: 0.02em; margin-bottom: 6px; }
+  .parent-name { font-family: 'Fraunces', serif; font-size: 34px; font-weight: 500; line-height: 1.1; margin: 0 0 18px; }
+  .circle-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .duty-hint { font-size: 11.5px; color: var(--ink-soft); margin-top: 8px; padding-left: 2px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--card); position: relative; flex-shrink: 0; border: 2px solid transparent; }
+  .avatar.on-duty { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-soft); }
+  .on-duty-tag { font-size: 11px; color: var(--teal); font-weight: 600; margin-left: 2px; }
+
+  .timeline { position: relative; padding-left: 26px; }
+  .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 1.5px; background: var(--line); }
+  .item { position: relative; margin-bottom: 14px; }
+  .item-dot { position: absolute; left: -26px; top: 18px; width: 11px; height: 11px; border-radius: 50%; background: var(--line); border: 2px solid var(--paper); transition: background 0.3s ease, transform 0.3s ease; }
+  .item.done .item-dot { background: var(--teal); }
+  .item.attention .item-dot { background: var(--marigold); transform: scale(1.15); }
+  .item-time { font-size: 12px; color: var(--ink-soft); margin-bottom: 4px; font-weight: 500; }
+  .item-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; transition: border-color 0.3s ease, background 0.3s ease; }
+  .item.attention .item-card { border-color: var(--marigold); background: var(--marigold-soft); }
+  .item-main { min-width: 0; }
+  .item-title { font-size: 15px; font-weight: 600; margin: 0 0 3px; }
+  .item-sub { font-size: 13px; color: var(--ink-soft); margin: 0; }
+  .item-sub.attention-text { color: #9A6118; }
+  .edit-link { color: var(--teal); font-weight: 600; cursor: pointer; margin-left: 4px; }
+  .edit-link:hover { text-decoration: underline; }
+  .inline-urgency { padding-top: 1px; }
+  .inline-urgency-label { font-size: 12px; color: var(--ink-soft); display: block; margin-bottom: 6px; }
+  .urgency-options.small { display: flex; gap: 6px; }
+  .urgency-options.small .urgency-btn { padding: 6px 9px; font-size: 11.5px; flex: none; }
+  :root[data-theme="dark"] .item-sub.attention-text { color: #F0B868; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .item-sub.attention-text { color: #F0B868; } }
+
+  .action-btn { flex-shrink: 0; border: none; border-radius: 20px; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform 0.15s ease, background 0.2s ease; }
+  .action-btn:active { transform: scale(0.95); }
+  .action-btn.confirm { background: var(--teal); color: white; }
+  .action-btn.confirm:hover { background: #3f6664; }
+  .action-btn.pickup { background: var(--marigold); color: #3A2708; }
+  .action-btn.pickup:hover { background: #cf8730; }
+  .done-mark { flex-shrink: 0; font-size: 13px; color: var(--teal); font-weight: 600; white-space: nowrap; padding-top: 2px; }
+
+  .log-section { margin-top: 34px; }
+  .log-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; margin: 0 0 12px; padding: 0 4px; }
+  .log-entry { display: flex; gap: 10px; padding: 8px 4px; font-size: 13px; border-bottom: 1px solid var(--line); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--card); flex-shrink: 0; margin-top: 1px; }
+  .log-text { color: var(--ink); }
+  .log-time { color: var(--ink-soft); }
+  .log-entry.new { animation: settle 0.4s ease; }
+  @keyframes settle { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .empty-hint { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 24px 12px 4px; line-height: 1.5; }
+
+  .proto-tool {
+    margin-top: 30px;
+    padding: 14px 16px;
+    border: 1.5px dashed var(--line);
+    border-radius: 12px;
+    text-align: center;
+  }
+  .proto-tool-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 9px;
+  }
+
+  .notif-banner {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top, 0px));
+    left: 50%;
+    width: calc(100% - 32px);
+    max-width: 380px;
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    padding: 13px 15px 15px;
+    z-index: 1000;
+    transform: translateX(-50%) translateY(-14px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+  }
+  .notif-banner.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+  .notif-banner.hidden { display: none; }
+  .notif-top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .notif-icon {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--teal); color: white;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;
+  }
+  .notif-meta { display: flex; align-items: baseline; gap: 6px; flex: 1; }
+  .notif-app { font-size: 13px; font-weight: 700; }
+  .notif-time { font-size: 11.5px; color: var(--ink-soft); }
+  .notif-to { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 3px; }
+  .notif-body { font-size: 14px; line-height: 1.4; margin-bottom: 12px; }
+  .notif-actions { display: flex; gap: 8px; }
+  .notif-btn {
+    flex: 1; border: none; border-radius: 20px; padding: 9px 10px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .notif-btn:active { transform: scale(0.96); }
+  .notif-btn.done { background: var(--teal); color: white; }
+  .notif-btn.help { background: var(--marigold-soft); color: #9A6118; }
+
+  /* ---------- Backend additions ---------- */
+  body.booting .wizard, body.booting .app { display: none; }
+  .setup-error { color: #9A3B2E; font-size: 13px; margin: 0 0 14px; min-height: 0; }
+  :root[data-theme="dark"] .setup-error { color: #E59A8C; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .setup-error { color: #E59A8C; } }
+  .share-row { margin-top: 30px; text-align: center; }
+  .share-hint { font-size: 12px; color: var(--ink-soft); margin: 8px 0 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- ===================== WIZARD ===================== -->
+<div class="wizard active" id="wizard">
+
+  <!-- Step 1 -->
+  <div class="wiz-step" data-step="1">
+    <div class="dots"><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="welcome-mark fraunces">Welcome to Care Circle</div>
+    <h1 class="step-title fraunces">Who are we caring for?</h1>
+    <p class="step-hint">A parent, grandparent, or anyone you help look after. We'll build the day around them.</p>
+    <div class="field-block">
+      <label class="field-label">Their name</label>
+      <input type="text" id="parent-name-input" placeholder="e.g. Eleanor">
+    </div>
+    <div class="wizard-nav">
+      <span></span>
+      <button class="btn primary" id="step1-next" disabled onclick="goToStep(2)">Continue</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="wiz-step" data-step="2" style="display:none;">
+    <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+    <h1 class="step-title fraunces">Who's sharing the care?</h1>
+    <p class="step-hint">Add everyone who helps out. You can always add more people later.</p>
+    <div class="people-list" id="people-list"></div>
+    <div class="add-row">
+      <input type="text" id="person-name-input" placeholder="Add a person, e.g. Jordan">
+      <button class="btn small primary" onclick="addPerson()">Add</button>
+    </div>
+    <div class="wizard-nav" style="margin-top:24px;">
+      <button class="btn ghost" onclick="goToStep(1)">Back</button>
+      <button class="btn primary" id="step2-next" disabled onclick="goToStep(3)">Continue</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="wiz-step" data-step="3" style="display:none;">
+    <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div></div>
+    <h1 class="step-title fraunces">What needs tracking today?</h1>
+    <p class="step-hint">Start with today's medications and appointments. Add anything else anytime.</p>
+    <div class="item-list" id="item-list"></div>
+    <div class="empty-note" id="item-empty-note">Nothing added yet — try one below.</div>
+    <div class="add-row item-add-row">
+      <input type="time" id="item-time-input" value="08:00">
+      <input type="text" id="item-title-input" placeholder="e.g. Blood pressure medication">
+      <button class="btn small primary" onclick="addItem()">Add</button>
+    </div>
+    <div class="urgency-row">
+      <span class="urgency-label">How soon should we worry?</span>
+      <span class="urgency-hint">If nobody's confirmed this by then, we'll text the family to check in.</span>
+      <div class="urgency-options" id="urgency-options">
+        <button type="button" class="urgency-btn" data-value="0" onclick="setUrgency('0')">Right away</button>
+        <button type="button" class="urgency-btn selected" data-value="20" onclick="setUrgency('20')">20 min</button>
+        <button type="button" class="urgency-btn" data-value="60" onclick="setUrgency('60')">1 hour</button>
+      </div>
+    </div>
+    <div class="wizard-nav" style="margin-top:24px;">
+      <button class="btn ghost" onclick="goToStep(2)">Back</button>
+      <button class="btn primary" id="step3-next" disabled onclick="goToStep(4)">Continue</button>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="wiz-step" data-step="4" style="display:none;">
+    <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div></div>
+    <h1 class="step-title fraunces">Who's on duty first?</h1>
+    <p class="step-hint">Pick a starting point. The circle rotates from here, and anyone can step in anytime.</p>
+    <div class="radio-list" id="duty-list"></div>
+    <p class="setup-error" id="setup-error" role="alert"></p>
+    <div class="wizard-nav">
+      <button class="btn ghost" onclick="goToStep(3)">Back</button>
+      <button class="btn primary" id="step4-next" disabled onclick="finishSetup()">Set up Care Circle</button>
+    </div>
+  </div>
+
+  <!-- Done -->
+  <div class="wiz-step" data-step="done" style="display:none;">
+    <div class="done-screen">
+      <div class="done-emoji">🌿</div>
+      <div class="done-title fraunces">You're all set</div>
+      <div class="done-sub" id="done-sub"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div class="app" id="app">
+  <div class="header">
+    <div class="date" id="today-date"></div>
+    <h1 class="parent-name" id="dash-parent-name"></h1>
+    <div class="circle-row" id="avatar-row"></div>
+    <div class="duty-hint" id="duty-hint">Tap anyone to hand off on-duty</div>
+  </div>
+  <div class="timeline" id="timeline"></div>
+  <div class="log-section">
+    <h2 class="log-title">Family log</h2>
+    <div id="log"></div>
+  </div>
+  <div class="proto-tool">
+    <span class="proto-tool-label">Prototype tool</span>
+    <button class="btn small primary" onclick="simulateReminder()">Simulate the on-duty reminder text</button>
+  </div>
+  <div class="share-row">
+    <button class="btn small primary" id="copy-link-btn" onclick="copyCircleLink()">Copy link to this circle</button>
+    <p class="share-hint">Anyone with this link can open this circle, so only share it with family.</p>
+  </div>
+  <div class="empty-hint">Your circle is saved. Confirmations and hand-offs aren't saved yet, so they reset when you refresh.</div>
+</div>
+
+<div class="notif-banner hidden" id="notif-banner">
+  <div class="notif-top">
+    <div class="notif-icon">🌿</div>
+    <div class="notif-meta">
+      <span class="notif-app">Care Circle</span>
+      <span class="notif-time">now</span>
+    </div>
+  </div>
+  <div class="notif-to" id="notif-to"></div>
+  <div class="notif-body" id="notif-body"></div>
+  <div class="notif-actions" id="notif-actions">
+    <button class="notif-btn done" onclick="replyToNotif('done')">DONE</button>
+    <button class="notif-btn help" onclick="replyToNotif('help')">NEED HELP</button>
+  </div>
+</div>
+
+<script>
+  const palette = ["#4C7A78", "#B98F84", "#8C7A55", "#6E85A6", "#A66E7A", "#7A9A6E"];
+  let parentName = "";
+  let people = {};      // key -> { name, initials, color }
+  let peopleOrder = [];
+  let draftItems = [];  // { time, title, urgency }
+  let onDuty = null;
+  let pendingUrgency = "20";
+
+  const urgencyLabels = { "0": "right away", "20": "20 min", "60": "1 hour" };
+
+  // ---------- Backend connection ----------
+  const API = "/api/circle";
+  const STORAGE_KEY = "careCircleId";
+  let circleId = null;
+
+  // Makes user-typed text safe to place inside HTML (prevents injected code).
+  function esc(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function timeAgo(iso) {
+    const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + " min ago";
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return hrs + (hrs === 1 ? " hour ago" : " hours ago");
+    const days = Math.round(hrs / 24);
+    return days + (days === 1 ? " day ago" : " days ago");
+  }
+
+  function getSavedCircleId() {
+    const fromUrl = new URLSearchParams(location.search).get("c");
+    if (fromUrl) return fromUrl;
+    try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
+  }
+  function rememberCircle(id) {
+    try { localStorage.setItem(STORAGE_KEY, id); } catch (e) {}
+    history.replaceState(null, "", "?c=" + encodeURIComponent(id));
+  }
+  function forgetCircle() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    history.replaceState(null, "", location.pathname);
+  }
+
+  // Copy server data into the variables the rest of the app already uses.
+  function applyCircle(data) {
+    circleId = data.id;
+    parentName = data.parentName;
+    people = {};
+    peopleOrder = [];
+    data.people.forEach(p => {
+      people[p.key] = { name: p.name, initials: p.initials, color: p.color };
+      peopleOrder.push(p.key);
+    });
+    onDuty = data.onDuty;
+    items = data.items.map(it => ({
+      id: it.id, time: it.time, title: it.title, status: it.status,
+      urgency: it.urgency, note: it.note, doneBy: it.doneBy,
+      doneAt: it.doneAt ? timeAgo(it.doneAt) : ""
+    }));
+    log = data.log.map(l => ({ person: l.person, text: l.text, time: timeAgo(l.createdAt) }));
+  }
+
+  function showDashboard() {
+    document.body.classList.remove("booting");
+    document.getElementById("wizard").classList.remove("active");
+    document.getElementById("app").classList.add("active");
+    document.getElementById("dash-parent-name").textContent = "Caring for " + parentName;
+    renderAvatars();
+    renderTimeline();
+    renderLog();
+  }
+
+  function copyCircleLink() {
+    const btn = document.getElementById("copy-link-btn");
+    const link = location.origin + location.pathname + "?c=" + encodeURIComponent(circleId);
+    const done = () => { btn.textContent = "Link copied ✓"; setTimeout(() => btn.textContent = "Copy link to this circle", 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(done, () => window.prompt("Copy this link:", link));
+    } else {
+      window.prompt("Copy this link:", link);
+    }
+  }
+
+  function setUrgency(value) {
+    pendingUrgency = value;
+    document.querySelectorAll(".urgency-btn").forEach(btn => {
+      btn.classList.toggle("selected", btn.dataset.value === value);
+    });
+  }
+
+  // ---------- Step 1 ----------
+  const parentInput = document.getElementById("parent-name-input");
+  parentInput.addEventListener("input", () => {
+    document.getElementById("step1-next").disabled = parentInput.value.trim().length === 0;
+  });
+
+  function goToStep(n) {
+    document.querySelectorAll(".wiz-step").forEach(el => el.style.display = "none");
+    document.querySelector('.wiz-step[data-step="' + n + '"]').style.display = "block";
+    if (n === 2) renderPeopleList();
+    if (n === 3) renderItemList();
+    if (n === 4) renderDutyList();
+  }
+
+  // ---------- Step 2 ----------
+  function makeKey(name) { return name.toLowerCase().replace(/[^a-z0-9]/g, "") + "_" + Math.random().toString(36).slice(2,6); }
+
+  function addPerson() {
+    const input = document.getElementById("person-name-input");
+    const name = input.value.trim();
+    if (!name) return;
+    const key = makeKey(name);
+    const color = palette[peopleOrder.length % palette.length];
+    people[key] = { name, initials: name[0].toUpperCase(), color };
+    peopleOrder.push(key);
+    input.value = "";
+    renderPeopleList();
+  }
+
+  function removePerson(key) {
+    delete people[key];
+    peopleOrder = peopleOrder.filter(k => k !== key);
+    renderPeopleList();
+  }
+
+  function renderPeopleList() {
+    const list = document.getElementById("people-list");
+    list.innerHTML = "";
+    peopleOrder.forEach(key => {
+      const p = people[key];
+      const row = document.createElement("div");
+      row.className = "chip-row";
+      row.innerHTML = `
+        <div class="chip-avatar" style="background:${p.color}">${p.initials}</div>
+        <div class="chip-name">${esc(p.name)}</div>
+        <button class="chip-remove" onclick="removePerson('${key}')">Remove</button>
+      `;
+      list.appendChild(row);
+    });
+    document.getElementById("step2-next").disabled = peopleOrder.length === 0;
+  }
+
+  // ---------- Step 3 ----------
+  function addItem() {
+    const timeInput = document.getElementById("item-time-input");
+    const titleInput = document.getElementById("item-title-input");
+    const title = titleInput.value.trim();
+    if (!title) return;
+    const [h, m] = timeInput.value.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = ((h % 12) === 0) ? 12 : (h % 12);
+    const display = h12 + ":" + String(m).padStart(2, "0") + " " + period;
+    draftItems.push({ time: display, sortKey: h * 60 + m, title, urgency: pendingUrgency });
+    draftItems.sort((a, b) => a.sortKey - b.sortKey);
+    titleInput.value = "";
+    renderItemList();
+  }
+
+  function removeItem(idx) {
+    draftItems.splice(idx, 1);
+    renderItemList();
+  }
+
+  function renderItemList() {
+    const list = document.getElementById("item-list");
+    list.innerHTML = "";
+    draftItems.forEach((it, idx) => {
+      const row = document.createElement("div");
+      row.className = "chip-row";
+      row.innerHTML = `
+        <div class="chip-avatar" style="background:var(--teal)">${it.time.slice(0,2).trim()}</div>
+        <div class="chip-name">${esc(it.title)} <span style="color:var(--ink-soft); font-weight:400;">· ${it.time} · worry after ${urgencyLabels[it.urgency]}</span></div>
+        <button class="chip-remove" onclick="removeItem(${idx})">Remove</button>
+      `;
+      list.appendChild(row);
+    });
+    document.getElementById("item-empty-note").style.display = draftItems.length ? "none" : "block";
+    document.getElementById("step3-next").disabled = draftItems.length === 0;
+  }
+
+  // ---------- Step 4 ----------
+  function renderDutyList() {
+    const list = document.getElementById("duty-list");
+    list.innerHTML = "";
+    peopleOrder.forEach(key => {
+      const p = people[key];
+      const row = document.createElement("div");
+      row.className = "radio-row" + (onDuty === key ? " selected" : "");
+      row.onclick = () => { onDuty = key; renderDutyList(); };
+      row.innerHTML = `
+        <div class="radio-dot"></div>
+        <div class="radio-avatar" style="background:${p.color}">${p.initials}</div>
+        <div class="radio-name">${esc(p.name)}</div>
+      `;
+      list.appendChild(row);
+    });
+    document.getElementById("step4-next").disabled = !onDuty;
+  }
+
+  // ---------- Finish ----------
+  let items = [];
+  let log = [];
+
+  async function finishSetup() {
+    const btn = document.getElementById("step4-next");
+    const errEl = document.getElementById("setup-error");
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+
+    try {
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentName: parentInput.value.trim(),
+          people: peopleOrder.map(key => ({ key, name: people[key].name, color: people[key].color })),
+          items: draftItems.map(it => ({ time: it.time, sortKey: it.sortKey, title: it.title, urgency: it.urgency })),
+          onDuty
+        })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "Could not save. Please try again.");
+
+      // Load the saved circle back so the screen shows exactly what's in the database.
+      rememberCircle(body.id);
+      const loaded = await fetch(API + "?id=" + encodeURIComponent(body.id));
+      if (!loaded.ok) throw new Error("Saved, but could not load the circle. Please refresh the page.");
+      applyCircle(await loaded.json());
+    } catch (err) {
+      errEl.textContent = err.message || "Something went wrong. Please try again.";
+      btn.disabled = false;
+      btn.textContent = "Set up Care Circle";
+      return;
+    }
+
+    goToStep("done");
+    document.getElementById("done-sub").textContent =
+      `${peopleOrder.length > 1 ? peopleOrder.length + " people are" : "You're"} ready to help care for ${parentName}.`;
+    setTimeout(showDashboard, 1400);
+  }
+
+  // ---------- Dashboard (same interactions as before) ----------
+  function renderAvatars() {
+    const row = document.getElementById("avatar-row");
+    row.innerHTML = "";
+    peopleOrder.forEach(key => {
+      const p = people[key];
+      const wrap = document.createElement("div");
+      wrap.style.display = "flex";
+      wrap.style.alignItems = "center";
+      wrap.style.gap = "5px";
+      const av = document.createElement("div");
+      av.className = "avatar" + (key === onDuty ? " on-duty" : "");
+      av.style.background = p.color;
+      av.style.cursor = "pointer";
+      av.textContent = p.initials;
+      av.title = key === onDuty ? p.name + " — on duty" : "Tap to make " + p.name + " on duty";
+      if (key !== onDuty) av.onclick = () => switchOnDuty(key);
+      wrap.appendChild(av);
+      if (key === onDuty) {
+        const tag = document.createElement("span");
+        tag.className = "on-duty-tag";
+        tag.textContent = "on duty";
+        wrap.appendChild(tag);
+      }
+      row.appendChild(wrap);
+    });
+  }
+
+  function switchOnDuty(key) {
+    const prev = onDuty;
+    onDuty = key;
+    log.push({ person: key, text: `took over as on duty from ${people[prev].name}`, time: "just now", fresh: true });
+    renderAvatars();
+    renderLog();
+  }
+
+  function toggleEditUrgency(id) {
+    const item = items.find(i => i.id === id);
+    item.editingUrgency = !item.editingUrgency;
+    renderTimeline();
+  }
+
+  function setItemUrgency(id, value) {
+    const item = items.find(i => i.id === id);
+    item.urgency = value;
+    item.editingUrgency = false;
+    renderTimeline();
+  }
+
+  let currentNotifItemId = null;
+
+  function simulateReminder() {
+    const upcoming = items.filter(i => i.status === "upcoming").sort((a, b) => a.id - b.id)[0];
+    const banner = document.getElementById("notif-banner");
+    const actions = document.getElementById("notif-actions");
+    actions.style.display = "flex";
+
+    if (!upcoming) {
+      document.getElementById("notif-to").textContent = "Care Circle";
+      document.getElementById("notif-body").textContent = "Nothing left to remind about today — everything's confirmed.";
+      actions.style.display = "none";
+    } else {
+      currentNotifItemId = upcoming.id;
+      document.getElementById("notif-to").textContent = "Text to " + people[onDuty].name;
+      document.getElementById("notif-body").textContent =
+        `It's ${upcoming.time} — ${upcoming.title}. Reply DONE once it's given.`;
+    }
+    banner.classList.remove("hidden");
+    requestAnimationFrame(() => banner.classList.add("show"));
+  }
+
+  function replyToNotif(action) {
+    if (!currentNotifItemId) return;
+    const item = items.find(i => i.id === currentNotifItemId);
+    const actions = document.getElementById("notif-actions");
+
+    if (action === "done") {
+      confirmItem(item.id);
+      document.getElementById("notif-body").textContent = "Reply sent — logged as done.";
+    } else {
+      item.status = "attention";
+      item.note = `${people[onDuty].name} asked for help — texting the family`;
+      log.push({ person: onDuty, text: `asked for help with ${item.title.toLowerCase()}`, time: "just now", fresh: true });
+      renderTimeline();
+      renderLog();
+      document.getElementById("notif-body").textContent = "Reply sent — the family's been texted.";
+    }
+    actions.style.display = "none";
+    currentNotifItemId = null;
+
+    const banner = document.getElementById("notif-banner");
+    setTimeout(() => {
+      banner.classList.remove("show");
+      setTimeout(() => banner.classList.add("hidden"), 350);
+    }, 1300);
+  }
+
+  function renderTimeline() {
+    const tl = document.getElementById("timeline");
+    tl.innerHTML = "";
+    items.forEach(item => {
+      const el = document.createElement("div");
+      el.className = "item " + (item.status === "done" ? "done" : item.status === "attention" ? "attention" : "");
+      let actionHtml = "";
+      if (item.status === "upcoming") {
+        actionHtml = `<button class="action-btn confirm" onclick="confirmItem(${item.id})">Confirm</button>`;
+      } else if (item.status === "attention") {
+        actionHtml = `<button class="action-btn pickup" onclick="pickupItem(${item.id})">I'll take this</button>`;
+      } else if (item.status === "done") {
+        actionHtml = `<span class="done-mark">✓ ${esc(people[item.doneBy] ? people[item.doneBy].name : "Someone")}, ${esc(item.doneAt)}</span>`;
+      }
+      const subText = item.status === "attention"
+        ? `<p class="item-sub attention-text">${esc(item.note || "Not confirmed yet")}</p>`
+        : item.status === "upcoming"
+          ? (item.editingUrgency
+              ? `<div class="inline-urgency">
+                   <span class="inline-urgency-label">Worry after:</span>
+                   <div class="urgency-options small">
+                     <button type="button" class="urgency-btn ${item.urgency === '0' ? 'selected' : ''}" onclick="setItemUrgency(${item.id}, '0')">Right away</button>
+                     <button type="button" class="urgency-btn ${item.urgency === '20' ? 'selected' : ''}" onclick="setItemUrgency(${item.id}, '20')">20 min</button>
+                     <button type="button" class="urgency-btn ${item.urgency === '60' ? 'selected' : ''}" onclick="setItemUrgency(${item.id}, '60')">1 hour</button>
+                   </div>
+                 </div>`
+              : `<p class="item-sub">Not yet due · we'll check in after ${urgencyLabels[item.urgency] || "20 min"} <span class="edit-link" onclick="toggleEditUrgency(${item.id})">Edit</span></p>`)
+          : "";
+      el.innerHTML = `
+        <div class="item-dot"></div>
+        <div class="item-time">${esc(item.time)}</div>
+        <div class="item-card">
+          <div class="item-main">
+            <p class="item-title">${esc(item.title)}</p>
+            ${subText}
+          </div>
+          ${actionHtml}
+        </div>
+      `;
+      tl.appendChild(el);
+    });
+  }
+
+  function renderLog() {
+    const logEl = document.getElementById("log");
+    logEl.innerHTML = "";
+    log.slice().reverse().forEach((entry, i) => {
+      const p = people[entry.person];
+      const row = document.createElement("div");
+      row.className = "log-entry" + (i === 0 && entry.fresh ? " new" : "");
+      row.innerHTML = `
+        <div class="log-avatar" style="background:${p.color}">${p.initials}</div>
+        <div class="log-text"><strong>${esc(p.name)}</strong> ${esc(entry.text)} <span class="log-time">· ${esc(entry.time)}</span></div>
+      `;
+      logEl.appendChild(row);
+    });
+  }
+
+  function confirmItem(id) {
+    const item = items.find(i => i.id === id);
+    item.status = "done";
+    item.doneBy = onDuty;
+    item.doneAt = "just now";
+    log.push({ person: onDuty, text: `confirmed ${item.title.toLowerCase()}`, time: "just now", fresh: true });
+    renderTimeline();
+    renderLog();
+  }
+
+  function pickupItem(id) {
+    const item = items.find(i => i.id === id);
+    const others = peopleOrder.filter(k => k !== onDuty);
+    const helper = others.length ? others[0] : onDuty;
+    item.status = "done";
+    item.doneBy = helper;
+    item.doneAt = "just now";
+    log.push({ person: helper, text: `stepped in and gave ${item.title.toLowerCase()}`, time: "just now", fresh: true });
+    renderTimeline();
+    renderLog();
+  }
+
+  document.getElementById("today-date").textContent = new Date().toLocaleDateString(undefined, {
+    weekday: "long", month: "long", day: "numeric"
+  });
+
+  // ---------- On page open: load a saved circle if there is one ----------
+  (async function boot() {
+    const id = getSavedCircleId();
+    if (!id) return;                       // first visit: show the setup wizard
+    document.body.classList.add("booting"); // hide screens while we check
+    try {
+      const res = await fetch(API + "?id=" + encodeURIComponent(id));
+      if (res.status === 400 || res.status === 404) {
+        forgetCircle();                    // link is invalid or circle no longer exists
+        document.body.classList.remove("booting");
+        return;
+      }
+      if (!res.ok) throw new Error("Server error " + res.status);
+      applyCircle(await res.json());
+      rememberCircle(circleId);
+      showDashboard();
+    } catch (err) {
+      console.warn("Could not load the saved circle:", err);
+      document.body.classList.remove("booting"); // fall back to the wizard
+    }
+  })();
+</script>
+</body>
+</html>
